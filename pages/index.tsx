@@ -1,8 +1,18 @@
 import type { NextPage } from "next";
+import { GetServerSideProps } from "next";
 import Head from "next/head";
 import React from "react";
 
-const Home: NextPage = () => {
+interface DataType {
+  data?: any;
+}
+
+type Props = {
+  data?: DataType[];
+};
+
+const Home: NextPage = (props: Props) => {
+  console.log(props);
   return (
     <React.Fragment>
       <Head>
@@ -12,12 +22,20 @@ const Home: NextPage = () => {
       </Head>
 
       <main>
-        <h1 className="text-3xl font-bold text-red-800">Hello world!</h1>
+        <h1 className="text-3xl font-bold text-red-800">hello</h1>
       </main>
-
-      <footer></footer>
     </React.Fragment>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const _props: Props = {
+    data: [{}],
+  };
+
+  return {
+    props: _props,
+  };
 };
 
 export default Home;
