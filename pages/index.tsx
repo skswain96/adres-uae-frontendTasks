@@ -14,9 +14,12 @@ import Pagination from "@/components/structure/Pagination";
 
 import { Props, FilterOptionType, ResponseInterface } from "@/types/home";
 
-import { customSelectStyles } from "@/styles/select.style";
-
-import { breadcrumbs, filterOptions, colHeader } from "@/utils/configs";
+import {
+  API_URL,
+  breadcrumbs,
+  filterOptions,
+  colHeader,
+} from "@/utils/configs";
 
 const Home: NextPage = (props: Props) => {
   // define props
@@ -57,7 +60,6 @@ const Home: NextPage = (props: Props) => {
     let tableArray = [...arr];
     const endOffset = offset + itemsPerPage;
     tableArray = tableArray.slice(offset, endOffset);
-    setData(() => [...tableArray]);
     setFilteredTableData(() => [...tableArray]);
   };
 
@@ -65,8 +67,8 @@ const Home: NextPage = (props: Props) => {
     let tableArray = [...logReportData?.auditLog];
 
     const filteredData = tableArray.filter((item: any) => {
-      return Object.keys(item).some((key: any) =>
-        Object.keys(filterOptionValues).some((k: any) => {
+      return Object.keys(item).some((key: string) =>
+        Object.keys(filterOptionValues).some((k: string) => {
           if (item[key] && filterOptionValues[k]) {
             let lowercasedFilter = `${filterOptionValues[k]}`.toLowerCase();
 
@@ -188,6 +190,7 @@ const Home: NextPage = (props: Props) => {
   useEffect(() => {
     if (logReportData) {
       renderTableData(0, logReportData?.auditLog);
+      setData(() => [...logReportData?.auditLog]);
     }
   }, [logReportData]);
 
@@ -216,7 +219,6 @@ const Home: NextPage = (props: Props) => {
                   key={`${opt.name + index}`}
                   instanceId={`${opt.name + index}`}
                   label={opt.label}
-                  styles={customSelectStyles}
                   placeholder={opt.placeholder}
                   options={opt.options}
                   onChange={(res: any) => {
@@ -245,92 +247,105 @@ const Home: NextPage = (props: Props) => {
 
         {/* filters end */}
 
-        <div className="inline-flex flex-col w-full h-auto space-y-2 rounded-lg shadow-[0_6px_45px_-25px_rgba(0,0,0,0.3)] mt-3">
-          {/* table start */}
+        {filteredTableData.length > 0 && (
+          <div className="inline-flex flex-col w-full h-auto space-y-2 rounded-lg shadow-[0_6px_45px_-25px_rgba(0,0,0,0.3)] mt-3">
+            {/* table start */}
 
-          <Table
-            column={columnHeader}
-            data={filteredTableData}
-            onSort={onSort}
-          />
-
-          {/* table end */}
-
-          {/* pagination start */}
-
-          {logReportData && logReportData.recordsFiltered && (
-            <Pagination
-              onPageChange={handlePageClick}
-              pageCount={logReportData.recordsFiltered}
+            <Table
+              column={columnHeader}
+              data={filteredTableData}
+              onSort={onSort}
             />
-          )}
 
-          {/* pagination end */}
-        </div>
+            {/* table end */}
+
+            {/* pagination start */}
+
+            {logReportData && logReportData.recordsFiltered && (
+              <Pagination
+                onPageChange={handlePageClick}
+                pageCount={logReportData.recordsFiltered}
+              />
+            )}
+
+            {/* pagination end */}
+          </div>
+        )}
       </main>
     </React.Fragment>
   );
 };
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
+  let options: any = []; // filter options
+
   const response: any = await axios.get(
-    "https://run.mocky.io/v3/a2fbc23e-069e-4ba5-954c-cd910986f40f"
+    API_URL + "a2fbc23e-069e-4ba5-954c-cd910986f40f"
   );
 
-  let auditLog = response.data.result.auditLog;
-  let options: any = [];
+  if (response) {
+    let auditLog = response?.data?.result?.auditLog;
 
-  auditLog = auditLog.filter((a: any) => {
-    if (a.applicationType && a.actionType) {
-      return a;
-    }
-  });
+    const uniqueActionTypeArray = auditLog
+      .filter((value: any, index: number) => {
+        const _actionTypeValue = value.actionType.toString();
 
-  const uniqueActionTypeArray = auditLog
-    .filter((value: any, index: number) => {
-      const _actionTypeValue = JSON.stringify(value.actionType);
+        if (_actionTypeValue !== "null") {
+          return (
+            index ===
+            auditLog.findIndex((obj: any) => {
+              return obj.actionType.toString() === _actionTypeValue;
+            })
+          );
+        }
+      })
+      // .map((d: any) => ({ value: d.actionType, label: d.actionType }));
+      .map((d: any) => {
+        return {
+          value: d.actionType,
+          label: d.actionType,
+        };
+      });
 
-      return (
-        index ===
-        auditLog.findIndex((obj: any) => {
-          return JSON.stringify(obj.actionType) === _actionTypeValue;
-        })
-      );
-    })
-    .map((d: any) => ({ value: d.actionType, label: d.actionType }));
+    const uniqueApplicationTypeArray = auditLog
+      .filter((value: any, index: number) => {
+        const _applicationTypeValue = JSON.stringify(value.applicationType);
+        if (_applicationTypeValue !== "null") {
+          return (
+            index ===
+            auditLog.findIndex((obj: any) => {
+              return (
+                JSON.stringify(obj.applicationType) === _applicationTypeValue
+              );
+            })
+          );
+        }
+      })
+      .map((d: any) => ({
+        value: d.applicationType,
+        label: d.applicationType,
+      }));
 
-  const uniqueApplicationTypeArray = auditLog
-    .filter((value: any, index: number) => {
-      const _applicationTypeValue = JSON.stringify(value.applicationType);
+    options = filterOptions.map((d: any) => {
+      if (d.name === "actionType") {
+        return {
+          ...d,
+          options: uniqueActionTypeArray,
+        };
+      }
 
-      return (
-        index ===
-        auditLog.findIndex((obj: any) => {
-          return JSON.stringify(obj.applicationType) === _applicationTypeValue;
-        })
-      );
-    })
-    .map((d: any) => ({ value: d.applicationType, label: d.applicationType }));
+      if (d.name === "applicationType") {
+        return {
+          ...d,
+          options: uniqueApplicationTypeArray,
+        };
+      }
 
-  options = filterOptions.map((d: any) => {
-    if (d.name === "actionType") {
       return {
         ...d,
-        options: uniqueActionTypeArray,
       };
-    }
-
-    if (d.name === "applicationType") {
-      return {
-        ...d,
-        options: uniqueApplicationTypeArray,
-      };
-    }
-
-    return {
-      ...d,
-    };
-  });
+    });
+  }
 
   const _props: Props = {
     data: response.data.result,

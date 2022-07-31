@@ -9,7 +9,15 @@ const Breadcrumbs: FunctionComponent<any> = (props: any) => {
       {breadcrumbs.map((links: any, index: number) => {
         return (
           <React.Fragment key={links.link + index}>
-            <Link label={links.label} path={links.link} />
+            <Link
+              label={links.label}
+              path={links.link}
+              color={
+                breadcrumbs.length === index + 1
+                  ? "text-gray-400"
+                  : "text-primary"
+              }
+            />
             {breadcrumbs.length !== index + 1 && <span>{`>`}</span>}
           </React.Fragment>
         );

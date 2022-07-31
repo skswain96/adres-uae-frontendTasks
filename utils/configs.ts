@@ -1,3 +1,7 @@
+const uri: string = `https://run.mocky.io/`;
+const version: string = `v3`;
+export const API_URL: string = uri + version + "/";
+
 export const breadcrumbs = [
   {
     label: "Home",
