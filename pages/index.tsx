@@ -23,7 +23,7 @@ import {
 
 const Home: NextPage = (props: Props) => {
   // define props
-  const logReportData = { ...props.data };
+  const logReportData = props.data;
   const itemsPerPage = 10;
   const pageFilterOptions = [...props.options];
 

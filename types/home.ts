@@ -21,7 +21,7 @@ export interface ResponseInterface {
   applicationType: string;
   companyId: string;
   creationTimestamp: string;
-  ip: string;
+  ip: string | number;
   logId: number | string;
   logInfo: string;
   ownerId: string;
