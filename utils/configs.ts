@@ -11,7 +11,7 @@ export const breadcrumbs = [
   },
   {
     label: "Logger Search",
-    link: "/logger-search",
+    link: "/",
     current: false,
   },
 ];

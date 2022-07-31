@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from "react";
-import Link from "../base/links";
+import Link from "../base//Links";
 
 const Breadcrumbs: FunctionComponent<any> = (props: any) => {
   const breadcrumbs = props.breadcrumbs || [];

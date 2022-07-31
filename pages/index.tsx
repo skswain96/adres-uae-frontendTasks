@@ -4,51 +4,57 @@ import { GetServerSideProps } from "next";
 import Head from "next/head";
 import axios from "axios";
 import moment from "moment";
-import ReactPaginate from "react-paginate";
-import Select from "react-select";
 
+import SelectInput from "@/components/structure/SelectInput";
 import Breadcrumbs from "@/components/structure/Breadcrumbs";
 import TextInput from "@/components/structure/TextInput";
 import Button from "@/components/base/Button";
+import Table from "@/components/structure/Table";
+import Pagination from "@/components/structure/Pagination";
+
+import { Props, FilterOptionType, ResponseInterface } from "@/types/home";
 
 import { customSelectStyles } from "@/styles/select.style";
 
 import { breadcrumbs, filterOptions, colHeader } from "@/utils/configs";
 
-import { ArrowUp, ArrowDown, ChevronRight, ChevronLeft } from "@/utils/icons";
-
-type Props = {
-  data?: any;
-  options?: any;
-};
-
 const Home: NextPage = (props: Props) => {
+  // define props
   const logReportData = props.data;
   const itemsPerPage = 10;
   const pageFilterOptions = props.options;
 
-  const [data, setData] = useState([]);
-  const [filteredTableData, setFilteredTableData] = useState([]);
-  const [columnHeader, setColumnHeader] = useState(colHeader);
-  const [itemOffset, setItemOffset] = useState(0);
-  const [filterOptionValues, setFilterOptionValues] = useState({
+  // define initial values
+  const filterOptionsInitialValues: FilterOptionType = {
     logId: "",
     applicationType: "",
     applicationId: "",
     actionType: "",
     fromCreationTimestamp: "",
     toCreationTimestamp: "",
-  });
-
-  const handlePageClick = (event: any) => {
-    const newOffset =
-      (event.selected * itemsPerPage) % logReportData.recordsFiltered;
-
-    setItemOffset(newOffset);
   };
 
-  const renderTableData = (offset: number) => {
-    let tableArray = [...logReportData?.auditLog];
+  // define initial states
+  const [data, setData] = useState<Array<ResponseInterface>>([]);
+  const [filteredTableData, setFilteredTableData] = useState<
+    Array<ResponseInterface>
+  >([]);
+  const [columnHeader, setColumnHeader] = useState(colHeader);
+  const [itemOffset, setItemOffset] = useState(0);
+  const [filterOptionValues, setFilterOptionValues] =
+    useState<FilterOptionType>(filterOptionsInitialValues);
+
+  const handlePageClick = (event: any) => {
+    if (logReportData && logReportData.recordsFiltered) {
+      const totalRecord = logReportData.recordsFiltered;
+      const newOffset = (event.selected * itemsPerPage) % totalRecord;
+
+      setItemOffset(newOffset);
+    }
+  };
+
+  const renderTableData = (offset: number, arr: any) => {
+    let tableArray = [...arr];
     const endOffset = offset + itemsPerPage;
     tableArray = tableArray.slice(offset, endOffset);
     setData(() => [...tableArray]);
@@ -57,13 +63,31 @@ const Home: NextPage = (props: Props) => {
 
   const filterTable = () => {
     let tableArray = [...logReportData?.auditLog];
-    // const lowercasedFilter = `${filterOptionValues.logId}`.toLowerCase();
 
     const filteredData = tableArray.filter((item: any) => {
-      return Object.keys(item).some((key) =>
-        Object.keys(filterOptionValues).some((k) => {
+      return Object.keys(item).some((key: any) =>
+        Object.keys(filterOptionValues).some((k: any) => {
           if (item[key] && filterOptionValues[k]) {
             let lowercasedFilter = `${filterOptionValues[k]}`.toLowerCase();
+
+            if (k === "fromCreationTimestamp") {
+              let start = moment(item.creationTimestamp).format("YY-MM-DD");
+              if (start === lowercasedFilter) {
+                return `${item["creationTimestamp"]}`
+                  .toLowerCase()
+                  .includes(lowercasedFilter);
+              }
+            }
+
+            if (k === "toCreationTimestamp") {
+              let end = moment(item.creationTimestamp).format("YY-MM-DD");
+              if (end === lowercasedFilter) {
+                return `${item["creationTimestamp"]}`
+                  .toLowerCase()
+                  .includes(lowercasedFilter);
+              }
+            }
+
             return `${item[key]}`.toLowerCase().includes(lowercasedFilter);
           }
         })
@@ -71,21 +95,19 @@ const Home: NextPage = (props: Props) => {
     });
 
     if (filteredData.length > 0) {
-      setFilteredTableData(() => [...filteredData]);
+      renderTableData(itemOffset, filteredData);
     }
 
     if (filteredData.length === 0) {
-      setFilteredTableData(() => [...data]);
+      renderTableData(itemOffset, data);
     }
   };
-
-  // `${item[key]}`.toLowerCase().includes(lowercasedFilter)
 
   const onSort = (column: number) => {
     const direction =
       columnHeader[column]?.sortDirection === "asc" ? "desc" : "asc";
 
-    let sortedTableData: any = filteredTableData.sort((a: any, b: any) => {
+    let sortedTableData: any = filteredTableData.sort((a: any, b: any): any => {
       Object.keys(a).forEach(function eachKey(key) {
         if (key === colHeader[column].name) {
           const nameA = a[key];
@@ -98,7 +120,6 @@ const Home: NextPage = (props: Props) => {
             return 1;
           }
 
-          // names must be equal
           return 0;
         }
       });
@@ -131,13 +152,42 @@ const Home: NextPage = (props: Props) => {
     setFilteredTableData(() => [...sortedTableData]);
   };
 
+  const handleInputChange = (opt: any, value: any) => {
+    let obj = { ...filterOptionValues };
+    if (opt.name === "logId") {
+      obj.logId = value;
+    }
+
+    if (opt.name === "applicationId") {
+      obj.applicationId = value;
+    }
+
+    if (opt.name === "actionType") {
+      obj.actionType = value.toString();
+    }
+
+    if (opt.name === "applicationType") {
+      obj.applicationType = value.toString();
+    }
+
+    if (opt.name === "fromCreationTimestamp") {
+      obj.fromCreationTimestamp = moment(value).format("YY-MM-DD");
+    }
+
+    if (opt.name === "toCreationTimestamp") {
+      obj.toCreationTimestamp = moment(value).format("YY-MM-DD");
+    }
+
+    setFilterOptionValues(obj);
+  };
+
   useEffect(() => {
-    renderTableData(itemOffset);
+    renderTableData(itemOffset, logReportData?.auditLog);
   }, [itemOffset]);
 
   useEffect(() => {
     if (logReportData) {
-      renderTableData(0);
+      renderTableData(0, logReportData?.auditLog);
     }
   }, [logReportData]);
 
@@ -159,25 +209,19 @@ const Home: NextPage = (props: Props) => {
         {/* filters start */}
 
         <div className="inline-flex justify-between space-x-6 items-end w-full relative py-3">
-          {pageFilterOptions.map((opt, index) => {
+          {pageFilterOptions.map((opt: any, index: number) => {
             if (opt.type === "select") {
               return (
-                <Select
-                  key={index}
+                <SelectInput
+                  key={`${opt.name + index}`}
+                  instanceId={`${opt.name + index}`}
+                  label={opt.label}
                   styles={customSelectStyles}
                   placeholder={opt.placeholder}
                   options={opt.options}
-                  onChange={(value: any) => {
-                    let obj = { ...filterOptionValues };
-                    if (opt.name === "actionType") {
-                      obj.actionType = value.toString();
-                    }
-
-                    if (opt.name === "applicationType") {
-                      obj.applicationType = value.toString();
-                    }
-
-                    setFilterOptionValues(obj);
+                  onChange={(res: any) => {
+                    let value = res.value;
+                    handleInputChange(opt, value);
                   }}
                 />
               );
@@ -186,35 +230,11 @@ const Home: NextPage = (props: Props) => {
             return (
               <TextInput
                 key={index}
+                type={opt.type}
                 label={opt.label}
                 placeholder={opt.placeholder}
                 onChange={(value: string) => {
-                  let obj = { ...filterOptionValues };
-                  if (opt.name === "logId") {
-                    obj.logId = value;
-                  }
-
-                  if (opt.name === "actionType") {
-                    obj.actionType = value;
-                  }
-
-                  if (opt.name === "applicationType") {
-                    obj.applicationType = value;
-                  }
-
-                  if (opt.name === "applicationId") {
-                    obj.applicationId = value;
-                  }
-
-                  if (opt.name === "fromCreationTimestamp") {
-                    obj.fromCreationTimestamp = value;
-                  }
-
-                  if (opt.name === "toCreationTimestamp") {
-                    obj.toCreationTimestamp = value;
-                  }
-
-                  setFilterOptionValues(obj);
+                  handleInputChange(opt, value);
                 }}
               />
             );
@@ -227,89 +247,24 @@ const Home: NextPage = (props: Props) => {
 
         <div className="inline-flex flex-col w-full h-auto space-y-2 rounded-lg shadow-[0_6px_45px_-25px_rgba(0,0,0,0.3)] mt-3">
           {/* table start */}
-          <table className="table-auto">
-            <thead>
-              <tr>
-                {columnHeader.map((col, index) => {
-                  return (
-                    <th
-                      onClick={() => onSort(index)}
-                      key={index}
-                      className="select-none text-left text-dark w-auto font-[600] py-3 px-4 border-b-2 border-b-light cursor-pointer"
-                    >
-                      <div className="inline-flex items-center space-x-3">
-                        <span>{col.label}</span>
-                        <div className="rounded-full w-5 h-5 px-[1px] py-1[1px] bg-light inline-flex items-center justify-center text-primary">
-                          {col.sortDirection === "asc" ? ArrowDown : ArrowUp}
-                        </div>
-                      </div>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTableData.map((row: any, index: number) => {
-                return (
-                  <tr key={index} className="border-b-2 border-b-light">
-                    <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                      {row.logId || <span className="text-gray-200">-/-</span>}
-                    </td>
-                    <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                      {row.applicationType || (
-                        <span className="text-gray-200">-/-</span>
-                      )}
-                    </td>
-                    <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                      {row.applicationId || (
-                        <span className="text-gray-200">-/-</span>
-                      )}
-                    </td>
-                    <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                      {row.actionType || (
-                        <span className="text-gray-200">-/-</span>
-                      )}
-                    </td>
-                    <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                      {row.actionType || (
-                        <span className="text-gray-200">-/-</span>
-                      )}
-                    </td>
-                    <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                      {moment(row.creationTimestamp).format(
-                        "YY-MM-DD / HH:mm:ss"
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+
+          <Table
+            column={columnHeader}
+            data={filteredTableData}
+            onSort={onSort}
+          />
+
           {/* table end */}
 
           {/* pagination start */}
-          <div className="py-4 w-full h-auto inline-flex justify-center items-center">
-            <ReactPaginate
-              breakLabel={<span className="text-sm text-gray-500">...</span>}
-              nextLabel={
-                <div className="text-gray-500 h-4 w-4 inline-flex items-center justify-center">
-                  {ChevronRight}
-                </div>
-              }
-              containerClassName="inline-flex items-center justify-center space-x-3"
-              pageClassName="rounded-md text-gray-500 w-7 h-7 text-xs text-center inline-flex items-center justify-center"
-              activeClassName="font-[700] !text-dark bg-light"
+
+          {logReportData && logReportData.recordsFiltered && (
+            <Pagination
               onPageChange={handlePageClick}
-              pageRangeDisplayed={7}
-              marginPagesDisplayed={1}
               pageCount={logReportData.recordsFiltered}
-              previousLabel={
-                <div className="text-gray-500 h-4 w-4 inline-flex items-center justify-center">
-                  {ChevronLeft}
-                </div>
-              }
             />
-          </div>
+          )}
+
           {/* pagination end */}
         </div>
       </main>

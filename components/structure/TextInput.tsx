@@ -6,6 +6,7 @@ const TextInput: FunctionComponent<any> = (props) => {
   const placeholder = props.placeholder;
   const label = props.label;
   const onChange = props.onChange;
+  const type = props.type || "input";
 
   return (
     <div className="inline-flex flex-col justify-start items-start space-y-1 w-full">
@@ -13,6 +14,7 @@ const TextInput: FunctionComponent<any> = (props) => {
       <Input
         placeholder={placeholder}
         onChange={(e: any) => onChange(e.target.value)}
+        type={type}
       />
     </div>
   );
