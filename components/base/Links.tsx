@@ -6,9 +6,9 @@ const Link: FunctionComponent<any> = (props: any) => {
   const color = props.color || "text-primary";
 
   return (
-    <span className={`${color} text-sm hover:underline`}>
-      <a href={path}>{label}</a>
-    </span>
+    <a className={`${color} text-sm hover:underline`} href={path}>
+      {label}
+    </a>
   );
 };
 

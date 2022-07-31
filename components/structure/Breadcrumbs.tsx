@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from "react";
 import Link from "../base//Links";
+import Text from "../base/Text";
 
 const Breadcrumbs: FunctionComponent<any> = (props: any) => {
   const breadcrumbs = props.breadcrumbs || [];
@@ -18,7 +19,7 @@ const Breadcrumbs: FunctionComponent<any> = (props: any) => {
                   : "text-primary"
               }
             />
-            {breadcrumbs.length !== index + 1 && <span>{`>`}</span>}
+            {breadcrumbs.length !== index + 1 && <Text content={`>`} />}
           </React.Fragment>
         );
       })}

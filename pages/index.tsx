@@ -23,9 +23,9 @@ import {
 
 const Home: NextPage = (props: Props) => {
   // define props
-  const logReportData = props.data;
+  const logReportData = { ...props.data };
   const itemsPerPage = 10;
-  const pageFilterOptions = props.options;
+  const pageFilterOptions = [...props.options];
 
   // define initial values
   const filterOptionsInitialValues: FilterOptionType = {
@@ -210,7 +210,6 @@ const Home: NextPage = (props: Props) => {
         {/* breadcrumbs end */}
 
         {/* filters start */}
-
         <div className="inline-flex justify-between space-x-6 items-end w-full relative py-3">
           {pageFilterOptions.map((opt: any, index: number) => {
             if (opt.type === "select") {
@@ -244,30 +243,25 @@ const Home: NextPage = (props: Props) => {
 
           <Button onClick={filterTable} label="Search Logger" />
         </div>
-
         {/* filters end */}
 
         {filteredTableData.length > 0 && (
           <div className="inline-flex flex-col w-full h-auto space-y-2 rounded-lg shadow-[0_6px_45px_-25px_rgba(0,0,0,0.3)] mt-3">
             {/* table start */}
-
             <Table
               column={columnHeader}
               data={filteredTableData}
               onSort={onSort}
             />
-
             {/* table end */}
 
             {/* pagination start */}
-
             {logReportData && logReportData.recordsFiltered && (
               <Pagination
                 onPageChange={handlePageClick}
                 pageCount={logReportData.recordsFiltered}
               />
             )}
-
             {/* pagination end */}
           </div>
         )}
@@ -299,7 +293,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           );
         }
       })
-      // .map((d: any) => ({ value: d.actionType, label: d.actionType }));
       .map((d: any) => {
         return {
           value: d.actionType,

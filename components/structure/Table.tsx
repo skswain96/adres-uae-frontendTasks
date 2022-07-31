@@ -1,6 +1,8 @@
 import { FunctionComponent } from "react";
 import moment from "moment";
 
+import Text from "../base/Text";
+
 import { ArrowUp, ArrowDown } from "@/utils/icons";
 
 const Table: FunctionComponent<any> = (props) => {
@@ -20,7 +22,7 @@ const Table: FunctionComponent<any> = (props) => {
                 className="select-none text-left text-dark w-auto font-[600] py-3 px-4 border-b-2 border-b-light cursor-pointer"
               >
                 <div className="inline-flex items-center space-x-3">
-                  <span>{col.label}</span>
+                  <Text content={col.label} />
                   <div className="rounded-full w-5 h-5 px-[1px] py-1[1px] bg-light inline-flex items-center justify-center text-primary">
                     {col.sortDirection === "asc" ? ArrowDown : ArrowUp}
                   </div>
@@ -35,23 +37,27 @@ const Table: FunctionComponent<any> = (props) => {
           return (
             <tr key={index} className="border-b-2 border-b-light">
               <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                {row.logId || <span className="text-gray-200">-/-</span>}
+                {row.logId || <Text color="text-gray-200" content={`-/-`} />}
               </td>
               <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
                 {row.applicationType || (
-                  <span className="text-gray-200">-/-</span>
+                  <Text color="text-gray-200" content={`-/-`} />
                 )}
               </td>
               <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
                 {row.applicationId || (
-                  <span className="text-gray-200">-/-</span>
+                  <Text color="text-gray-200" content={`-/-`} />
                 )}
               </td>
               <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                {row.actionType || <span className="text-gray-200">-/-</span>}
+                {row.actionType || (
+                  <Text color="text-gray-200" content={`-/-`} />
+                )}
               </td>
               <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
-                {row.actionType || <span className="text-gray-200">-/-</span>}
+                {row.actionType || (
+                  <Text color="text-gray-200" content={`-/-`} />
+                )}
               </td>
               <td className="px-4 text-left text-dark text-sm w-auto font-[400] py-3">
                 {moment(row.creationTimestamp).format("YY-MM-DD / HH:mm:ss")}
